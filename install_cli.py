@@ -1,8 +1,9 @@
 import argparse
 import json
 
-from config import set_config, VERSION
-from utils import generate_zip, clean_images, validate_config, pull_tag_images, generate_images_list, unpack_zip
+from config import set_config
+from utils import generate_zip, remove_old_images, validate_config, pull_tag_images, generate_images_list, unpack_zip, \
+    get_zip_name, get_zip_folder_name
 
 # version="7.2.0"
 # build="35"
@@ -41,9 +42,10 @@ if __name__ == "__main__":
     print(f"MTA Version: {VERSION}")
 
     # Performing main action
-    clean_images(VERSION)
+    remove_old_images(VERSION)
     image_list = generate_images_list(VERSION, BUILD)
     pull_tag_images(VERSION, image_list)
     generate_zip(VERSION, BUILD)
-    unpack_zip()
+    zip_folder_name = get_zip_folder_name(image_list)
+    unpack_zip(zip_folder_name)
 

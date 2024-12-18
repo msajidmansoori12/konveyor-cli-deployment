@@ -1,7 +1,10 @@
+import os
+import platform
+import shutil
 import subprocess
 import json
 import sys
-
+import zipfile
 import paramiko
 import logging
 import config
@@ -61,7 +64,7 @@ def pull_tag_images(mta_version, output_file):
                 run_command(tag_command)
                 print('Tagging complete...')
 
-def clean_images(version):
+def remove_old_images(version):
     """Removes old images before pulling new"""
     clean_images_command = f"for image in $(podman images|grep registry|grep {version}|awk '{{print $3}}'); do podman rmi $image --force; done"
     # print(clean_images_command)
@@ -113,5 +116,48 @@ def validate_config():
     if missing_vars:
         raise SystemExit(f"Missing required configuration values: {', '.join(missing_vars)}")
 
-def unpack_zip():
-    return None
+
+def get_zip_folder_name(image_list):
+    if isinstance(image_list, str):
+        image_list = json.loads(image_list)
+
+    for item in image_list["related_images"]:
+        for key, value in item.items():
+            if "mta-cli-rhel9" in key:
+                _, major, minor = value["nvr"].rsplit("-", 2)
+                return f"MTA-{major}-{minor}"
+
+def get_zip_name(version):
+    os_name = platform.system().lower()
+    machine = platform.machine().lower()
+
+    if "aarch64" in machine or "arm64" in machine:
+        machine = "arm64"
+    elif "x86_64" in machine or "amd64" in machine:
+        machine = "amd64"
+    else:
+        machine = "unknown"
+
+    return f"mta-{version}-cli-{os_name}-{machine}.zip"
+
+def unpack_zip(zip_folder_name):
+    # Finding full path where to unpack
+    home_dir = os.path.expanduser("~")  # Getting home dir
+    target_path = os.path.join(home_dir, ".kantra")
+    zip_name = get_zip_name(zip_folder_name.split("-")[1])
+
+    # Cleanup if .kantra exists
+    if os.path.exists(target_path):
+        shutil.rmtree(target_path)
+
+    os.makedirs(target_path, exist_ok=True)
+
+    # Concatenating full path
+    zip_full_path = os.path.join(config.MISC_DOWNSTREAM_PATH, zip_folder_name, zip_name)
+    print (zip_full_path)
+
+    # Unpacking zip file
+    with zipfile.ZipFile(zip_full_path, "r") as zip_ref:
+        zip_ref.extractall(target_path)
+
+    print(f"Zip {zip_name} unpacked successfully в {target_path}")
