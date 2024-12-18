@@ -1,0 +1,9 @@
+{
+  "version": "",
+  "build": "",
+  "misc_downstream_path": "",
+  "extract_binary": "",
+  "get_images_output": " ",
+  "bundle": "--bundle mta-operator-bundle-container-",
+  "no_brew": "--no-brew"
+}
