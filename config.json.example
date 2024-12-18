@@ -5,5 +5,7 @@
   "extract_binary": "",
   "get_images_output": " ",
   "bundle": "--bundle mta-operator-bundle-container-",
-  "no_brew": "--no-brew"
+  "no_brew": "--no-brew",
+  "ssh_user": "",
+  "ssh_key": ""
 }

@@ -61,37 +61,21 @@ def pull_tag_images(mta_version, output_file):
                 run_command(tag_command)
                 print('Tagging complete...')
 
-def clean_images():
+def clean_images(version):
     """Removes old images before pulling new"""
-    clean_images_command = f"for image in $(podman images|grep registry|grep {config.VERSION}|awk '{{print $3}}'); do podman rmi $image --force; done"
+    clean_images_command = f"for image in $(podman images|grep registry|grep {version}|awk '{{print $3}}'); do podman rmi $image --force; done"
     # print(clean_images_command)
     run_command(clean_images_command)
 
-def generate_zip():
+def generate_zip(version, build):
     """Generates zip with dependencies for local run"""
-    extract_binary_command = f"{config.MISC_DOWNSTREAM_PATH}{config.EXTRACT_BINARY} {config.BUNDLE}{config.VERSION}-{config.BUILD} {config.NO_BREW}"
+    extract_binary_command = f"{config.MISC_DOWNSTREAM_PATH}{config.EXTRACT_BINARY} {config.BUNDLE}{version}-{build} {config.NO_BREW}"
     run_command(extract_binary_command)
 
-def generate_images_list():
+def generate_images_list(version, build):
     """Generates list of images and pulls them"""
-    get_images_output_command = f"cd {config.MISC_DOWNSTREAM_PATH}; ./{config.GET_IMAGES_OUTPUT}{config.BUNDLE}{config.VERSION}-{config.BUILD} | grep -vi error"
+    get_images_output_command = f"cd {config.MISC_DOWNSTREAM_PATH}; ./{config.GET_IMAGES_OUTPUT}{config.BUNDLE}{version}-{build} | grep -vi error"
     return run_command(get_images_output_command).stdout
-    # pull_images(config.VERSION, result)
-
-# def main():
-#     parser = argparse.ArgumentParser(
-#         description="Process podman images and download zip files based on repository type.")
-#     parser.add_argument('--mta_version', required=True, help="The MTA version to use.")
-#     parser.add_argument('--image_output_file', required=True,
-#                         help='The file containing related_images for bundle, generated using get-image-build-details.py')
-#     args = parser.parse_args()
-#
-#     mta_version = args.mta_version
-#
-#     print(f"MTA Version: {mta_version}")
-#
-#     pull_images(args.mta_version, args.image_output_file)
-#
 
 def connect_ssh(ip_address, command):
     # SSH_HOST = 'host.example.com'
@@ -118,8 +102,6 @@ def connect_ssh(ip_address, command):
 def validate_config():
     """Ensures that required configuration variables are set."""
     required_vars = {
-        "VERSION": config.VERSION,
-        "BUILD": config.BUILD,
         "MISC_DOWNSTREAM_PATH": config.MISC_DOWNSTREAM_PATH,
         "EXTRACT_BINARY": config.EXTRACT_BINARY,
         "GET_IMAGES_OUTPUT": config.GET_IMAGES_OUTPUT,
@@ -130,3 +112,6 @@ def validate_config():
     missing_vars = [var for var, value in required_vars.items() if not value]
     if missing_vars:
         raise SystemExit(f"Missing required configuration values: {', '.join(missing_vars)}")
+
+def unpack_zip():
+    return None
