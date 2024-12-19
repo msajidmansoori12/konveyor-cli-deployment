@@ -154,7 +154,6 @@ def unpack_zip(zip_folder_name):
 
     # Concatenating full path
     zip_full_path = os.path.join(config.MISC_DOWNSTREAM_PATH, zip_folder_name, zip_name)
-    print (zip_full_path)
 
     # Unpacking zip file
     with zipfile.ZipFile(zip_full_path, "r") as zip_ref:
