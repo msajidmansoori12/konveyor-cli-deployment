@@ -1,14 +1,11 @@
 import os
-import platform
 import shutil
 import subprocess
 import json
 import sys
-import zipfile
 import paramiko
 import logging
 import config
-
 
 # Function to run a shell command
 # def run_command(command):
@@ -28,25 +25,50 @@ logging.basicConfig(
     ]
 )
 
-def run_command(command):
+def run_command(command, fail_on_failure=True):
+    """
+    Runs command in terminal
+    :param command: Command that will be performed
+    :param fail_on_failure: flag if run should be terminated on failure or not
+    :return: output of command performed
+    """
     try:
         logging.info(f"Executing command: {command}")
-        return subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, encoding='utf-8')
+        return subprocess.run(command, shell=True, check=fail_on_failure, stdout=subprocess.PIPE, encoding='utf-8')
     except Exception as err:
         logging.error(f"Command failed: {err}")
         raise SystemExit("There was an issue running a command: {}".format(err))
 
-def read_output_file(output_file):
-    with open(output_file, 'r') as file:
-        file_content = file.read()
-    data_dict = json.loads(file_content)
-    return data_dict
+def read_file(output_file):
+    """
+    Opens a file for reading
+    :param output_file:
+    :return: opened file's content
+    """
+    try:
+        with open(output_file, 'r') as file:
+            return file.read()
+    except Exception as err:
+        raise SystemExit(f"There was an error opening file: {err}")
 
+def convert_to_json(file):
+    """
+    Converts incoming string to JSON format
+    :param file: String to be converted
+    :return: JSON
+    """
+    try:
+        return json.loads(file)
+    except Exception as err:
+        raise SystemExit(f"There was an error converting string to JSON format: {err}")
 
 def pull_tag_images(mta_version, output_file):
-    """Pulls and tags images from the list it gets"""
-    # TODO: Add try/catch to json.load here
-    related_images = json.loads(output_file).get('related_images_pullspecs', None)
+    """
+    Pulls and tags images from the list it gets
+    :param mta_version: MTA version to be deployed
+    :param output_file: Output with list of images to be pulled. Can be generated and forwarded here or provided as CLI parameter
+    """
+    related_images = convert_to_json(output_file).get('related_images_pullspecs', None)
     if related_images:  # If related images are present then proceed
         keywords = ['java', 'generic', 'dotnet', 'cli']
         for image in related_images:
@@ -65,26 +87,41 @@ def pull_tag_images(mta_version, output_file):
                 print('Tagging complete...')
 
 def remove_old_images(version):
-    """Removes old images before pulling new"""
-    clean_images_command = f"for image in $(podman images|grep registry|grep {version}|awk '{{print $3}}'); do podman rmi $image --force; done"
-    run_command(clean_images_command)
+    """
+    Removes old images before pulling new
+    :param version: MTA version to be cleaned up
+    """
+    try:
+        result = run_command("podman images")
 
-def generate_zip(version, build):
-    """Generates zip with dependencies for local run"""
-    extract_binary_command = f"{config.MISC_DOWNSTREAM_PATH}{config.EXTRACT_BINARY} {config.BUNDLE}{version}-{build} {config.NO_BREW}"
-    run_command(extract_binary_command)
+        # Filtering lines that contain "registry" and version
+        images = []
+        for line in result.stdout.splitlines():
+            columns = line.split()
+            if "registry" in line and version in line:
+                # Third column -  IMAGE ID
+                if len(columns) >= 3:
+                    images.append(columns[2])
+
+        # Deleting images gotten after filtering
+        for image in images:
+            run_command(f"podman rmi {image} --force", False)
+    except subprocess.CalledProcessError as e:
+        print(f"Error while performing command: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
 
 def generate_images_list(version, build):
-    """Generates list of images and pulls them"""
+    """
+    Generates list of images and pulls them
+    :param version: MTA version, for example 7.2.0
+    :param build: build number
+    :return: String containing list of images. Can be converted to JSON after that.
+    """
     get_images_output_command = f"cd {config.MISC_DOWNSTREAM_PATH}; ./{config.GET_IMAGES_OUTPUT}{config.BUNDLE}{version}-{build} | grep -vi error"
     return run_command(get_images_output_command).stdout
 
 def connect_ssh(ip_address, command):
-    # SSH_HOST = 'host.example.com'
-    # SSH_USER = 'admin_user'
-    # SSH_KEY = '/home/user/.ssh/id_rsa'
-    # SSH_PASSWORD = ''
-
     SSH_HOST = ip_address
     SSH_USER = 'igor'
     SSH_KEY = None
@@ -101,68 +138,20 @@ def connect_ssh(ip_address, command):
     except Exception as err:
         raise SystemExit("There was an issue with ssh command: {}".format(err))
 
-def validate_config():
-    """Ensures that required configuration variables are set."""
-    required_vars = {
-        "MISC_DOWNSTREAM_PATH": config.MISC_DOWNSTREAM_PATH,
-        "EXTRACT_BINARY": config.EXTRACT_BINARY,
-        "GET_IMAGES_OUTPUT": config.GET_IMAGES_OUTPUT,
-        "BUNDLE": config.BUNDLE,
-        "NO_BREW": config.NO_BREW
-    }
-
-    missing_vars = [var for var, value in required_vars.items() if not value]
-    if missing_vars:
-        raise SystemExit(f"Missing required configuration values: {', '.join(missing_vars)}")
-
-
-def get_zip_folder_name(image_list):
-    if isinstance(image_list, str):
-        image_list = json.loads(image_list)
-
-    for item in image_list["related_images"]:
-        for key, value in item.items():
-            if "mta-cli-rhel9" in key:
-                _, major, minor = value["nvr"].rsplit("-", 2)
-                return f"MTA-{major}-{minor}"
-
-def get_zip_name(version):
-    os_name = platform.system().lower()
-    machine = platform.machine().lower()
-
-    if "aarch64" in machine or "arm64" in machine:
-        machine = "arm64"
-    elif "x86_64" in machine or "amd64" in machine:
-        machine = "amd64"
-    else:
-        machine = "unknown"
-
-    return f"mta-{version}-cli-{os_name}-{machine}.zip"
-
 def get_home_dir():
+    """
+    Gets home folder path of the user script is running from
+    :return: String contains folder name
+    """
     home_dir = os.path.expanduser("~")  # Getting home dir
     return os.path.join(home_dir, ".kantra")
 
 def clear_folder (path):
+    """
+    Clears folder by removing it with all content and creating it again
+    :param path: Path of the folder to be cleared
+    """
     if os.path.exists(path):
         shutil.rmtree(path)
 
     os.makedirs(path, exist_ok=True)
-
-def unpack_zip(zip_file, target_path):
-    """
-    Unpacks a ZIP file into the specified target directory.
-
-    Args:
-        zip_file (str): Path to the ZIP file to be unpacked.
-        target_path (str): Directory where the contents of the ZIP file will be extracted.
-
-    Returns:
-        None
-    """
-    clear_folder(target_path)
-
-    with zipfile.ZipFile(zip_file, "r") as zip_ref:
-        zip_ref.extractall(target_path)
-
-    print(f"Zip {zip_file} unpacked successfully в {target_path}")

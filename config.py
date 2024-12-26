@@ -16,3 +16,17 @@ def set_config(config):
     GET_IMAGES_OUTPUT = config["get_images_output"]
     BUNDLE = config["bundle"]
     NO_BREW = config["no_brew"]
+
+def validate_config():
+    """Ensures that required configuration variables are set."""
+    required_vars = {
+        "MISC_DOWNSTREAM_PATH": MISC_DOWNSTREAM_PATH,
+        "EXTRACT_BINARY": EXTRACT_BINARY,
+        "GET_IMAGES_OUTPUT": GET_IMAGES_OUTPUT,
+        "BUNDLE": BUNDLE,
+        "NO_BREW": NO_BREW
+    }
+
+    missing_vars = [var for var, value in required_vars.items() if not value]
+    if missing_vars:
+        raise SystemExit(f"Missing required configuration values: {', '.join(missing_vars)}")

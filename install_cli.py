@@ -5,8 +5,8 @@ import os
 
 import config
 from config import set_config
-from utils import generate_zip, remove_old_images, validate_config, pull_tag_images, generate_images_list, unpack_zip, \
-    get_zip_folder_name, get_zip_name, get_home_dir
+from utils.utils import remove_old_images, pull_tag_images, generate_images_list, get_home_dir, read_file
+from utils.zip import unpack_zip, generate_zip, get_zip_folder_name, get_zip_name
 
 CONFIG_FILE = "config.json"
 
@@ -22,7 +22,7 @@ def load_config():
 
 if __name__ == "__main__":
     load_config()
-    validate_config()
+    config.validate_config()
 
     parser = argparse.ArgumentParser(
         description="Deploys and prepares MTA CLI either locally or remotely.")
@@ -44,8 +44,7 @@ if __name__ == "__main__":
     if not args.image_output_file:
         image_list = generate_images_list(VERSION, BUILD)
     else:
-        with open(args.image_output_file, 'r') as file:
-            image_list = file.read()
+        image_list = read_file(args.image_output_file)
     pull_tag_images(VERSION, image_list)
     if not args.dependency_file:
         generate_zip(VERSION, BUILD)

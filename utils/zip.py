@@ -1,0 +1,57 @@
+import platform
+import zipfile
+
+import config
+from utils.utils import convert_to_json, clear_folder, run_command
+
+
+def get_zip_folder_name(image_list):
+    """
+    Gets folder name where dependency zip should be located. Name depends on version.
+    :param image_list: List of images to be parsed
+    :return: String containing folder name
+    """
+    if isinstance(image_list, str):
+        image_list = convert_to_json(image_list)
+
+    for item in image_list["related_images"]:
+        for key, value in item.items():
+            if "mta-cli-rhel9" in key:
+                _, major, minor = value["nvr"].rsplit("-", 2)
+                return f"MTA-{major}-{minor}"
+
+def get_zip_name(version):
+    """
+    Gets ZIP filename according to OS and CPU type
+    :param version: MTA version, for example 7.2.0 or 7.1.1
+    :return: String containing file name
+    """
+    os_name = platform.system().lower()
+    machine = platform.machine().lower()
+
+    if "aarch64" in machine or "arm64" in machine:
+        machine = "arm64"
+    elif "x86_64" in machine or "amd64" in machine:
+        machine = "amd64"
+    else:
+        machine = "unknown"
+
+    return f"mta-{version}-cli-{os_name}-{machine}.zip"
+
+def unpack_zip(zip_file, target_path):
+    """
+    Unpacks a ZIP file into the specified target directory.
+    :param zip_file: Path to the ZIP file to be unpacked.
+    :param target_path: Directory where the contents of the ZIP file will be extracted.
+    """
+    clear_folder(target_path)
+
+    with zipfile.ZipFile(zip_file, "r") as zip_ref:
+        zip_ref.extractall(target_path)
+
+    print(f"Zip {zip_file} unpacked successfully в {target_path}")
+
+def generate_zip(version, build):
+    """Generates zip with dependencies for local run"""
+    extract_binary_command = f"{config.MISC_DOWNSTREAM_PATH}{config.EXTRACT_BINARY} {config.BUNDLE}{version}-{build} {config.NO_BREW}"
+    run_command(extract_binary_command)
