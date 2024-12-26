@@ -1,10 +1,12 @@
 #!/usr/bin/python
 import argparse
 import json
+import os
 
+import config
 from config import set_config
 from utils import generate_zip, remove_old_images, validate_config, pull_tag_images, generate_images_list, unpack_zip, \
-    get_zip_folder_name
+    get_zip_folder_name, get_zip_name, get_home_dir
 
 CONFIG_FILE = "config.json"
 
@@ -38,18 +40,22 @@ if __name__ == "__main__":
     print(f"MTA Version: {VERSION}")
 
     # Performing main action
-    # remove_old_images(VERSION)
+    remove_old_images(VERSION)
     if not args.image_output_file:
         image_list = generate_images_list(VERSION, BUILD)
     else:
         with open(args.image_output_file, 'r') as file:
             image_list = file.read()
-    # pull_tag_images(VERSION, image_list)
+    pull_tag_images(VERSION, image_list)
     if not args.dependency_file:
         generate_zip(VERSION, BUILD)
         zip_folder_name = get_zip_folder_name(image_list)
+        zip_name = get_zip_name(zip_folder_name.split("-")[1])
+        full_zip_name = os.path.join(config.MISC_DOWNSTREAM_PATH, zip_folder_name, zip_name)
+        print (full_zip_name)
     else:
-        zip_folder_name=args.dependency_file
-        print (zip_folder_name)
-    unpack_zip(zip_folder_name)
+        full_zip_name=args.dependency_file
+        print (full_zip_name)
+    target_path = get_home_dir()
+    unpack_zip(full_zip_name, target_path)
 

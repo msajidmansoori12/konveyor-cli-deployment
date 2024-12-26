@@ -67,7 +67,6 @@ def pull_tag_images(mta_version, output_file):
 def remove_old_images(version):
     """Removes old images before pulling new"""
     clean_images_command = f"for image in $(podman images|grep registry|grep {version}|awk '{{print $3}}'); do podman rmi $image --force; done"
-    # print(clean_images_command)
     run_command(clean_images_command)
 
 def generate_zip(version, build):
@@ -140,23 +139,30 @@ def get_zip_name(version):
 
     return f"mta-{version}-cli-{os_name}-{machine}.zip"
 
-def unpack_zip(zip_folder_name):
-    # Finding full path where to unpack
+def get_home_dir():
     home_dir = os.path.expanduser("~")  # Getting home dir
-    target_path = os.path.join(home_dir, ".kantra")
-    zip_name = get_zip_name(zip_folder_name.split("-")[1])
+    return os.path.join(home_dir, ".kantra")
 
-    # Cleanup if .kantra exists
-    if os.path.exists(target_path):
-        shutil.rmtree(target_path)
+def clear_folder (path):
+    if os.path.exists(path):
+        shutil.rmtree(path)
 
-    os.makedirs(target_path, exist_ok=True)
+    os.makedirs(path, exist_ok=True)
 
-    # Concatenating full path
-    zip_full_path = os.path.join(config.MISC_DOWNSTREAM_PATH, zip_folder_name, zip_name)
+def unpack_zip(zip_file, target_path):
+    """
+    Unpacks a ZIP file into the specified target directory.
 
-    # Unpacking zip file
-    with zipfile.ZipFile(zip_full_path, "r") as zip_ref:
+    Args:
+        zip_file (str): Path to the ZIP file to be unpacked.
+        target_path (str): Directory where the contents of the ZIP file will be extracted.
+
+    Returns:
+        None
+    """
+    clear_folder(target_path)
+
+    with zipfile.ZipFile(zip_file, "r") as zip_ref:
         zip_ref.extractall(target_path)
 
-    print(f"Zip {zip_name} unpacked successfully в {target_path}")
+    print(f"Zip {zip_file} unpacked successfully в {target_path}")

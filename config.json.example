@@ -1,9 +1,7 @@
 {
-  "version": "",
-  "build": "",
-  "misc_downstream_path": "",
-  "extract_binary": "",
-  "get_images_output": " ",
+  "misc_downstream_path": "absolute_path_where_misc_downstream_is_located",
+  "extract_binary": "mta-cli-binary-extract.py",
+  "get_images_output": "get-image-build-details.py ",
   "bundle": "--bundle mta-operator-bundle-container-",
   "no_brew": "--no-brew",
   "ssh_user": "",
