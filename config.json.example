@@ -1,5 +1,6 @@
 {
   "misc_downstream_path": "absolute_path_where_misc_downstream_is_located",
+  "temp_dir": "",
   "extract_binary": "mta-cli-binary-extract.py",
   "get_images_output": "get-image-build-details.py ",
   "bundle": "--bundle mta-operator-bundle-container-",
