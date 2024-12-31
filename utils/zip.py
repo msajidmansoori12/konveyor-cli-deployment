@@ -1,3 +1,4 @@
+import logging
 import platform
 import zipfile
 
@@ -35,8 +36,9 @@ def get_zip_name(version):
         machine = "amd64"
     else:
         machine = "unknown"
-
-    return f"mta-{version}-cli-{os_name}-{machine}.zip"
+    zip_name = f"mta-{version}-cli-{os_name}-{machine}.zip"
+    logging.info(f"Expecting {zip_name} to be available...")
+    return zip_name
 
 def unpack_zip(zip_file, target_path):
     """
@@ -47,9 +49,12 @@ def unpack_zip(zip_file, target_path):
     clear_folder(target_path)
 
     with zipfile.ZipFile(zip_file, "r") as zip_ref:
-        zip_ref.extractall(target_path)
+        try:
+            zip_ref.extractall(target_path)
+            logging.info(f"Zip {zip_file} unpacked successfully to {target_path}")
+        except Exception as err:
+            raise SystemExit("There was an issue with unpacking zip file: {}".format(err))
 
-    print(f"Zip {zip_file} unpacked successfully в {target_path}")
 
 def generate_zip(version, build):
     """Generates zip with dependencies for local run"""

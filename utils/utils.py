@@ -40,6 +40,7 @@ def read_file(output_file):
     """
     try:
         with open(output_file, 'r') as file:
+            logging.info(f"File opened successfully: {output_file}")
             return file.read()
     except Exception as err:
         raise SystemExit(f"There was an error opening file: {err}")
@@ -51,7 +52,9 @@ def convert_to_json(file):
     :return: JSON
     """
     try:
-        return json.loads(file)
+        json_file = json.loads(file)
+        logging.info("String was converted to JSON successfully!")
+        return json_file
     except Exception as err:
         raise SystemExit(f"There was an error converting string to JSON format: {err}")
 
@@ -72,7 +75,7 @@ def connect_ssh(ip_address, command):
     except Exception as err:
         raise SystemExit("There was an issue with ssh command: {}".format(err))
 
-def get_home_dir():
+def get_target_dependency_path():
     """
     Gets home folder path of the user script is running from
     :return: String contains folder name
@@ -86,9 +89,18 @@ def clear_folder (path):
     :param path: Path of the folder to be cleared
     """
     if os.path.exists(path):
-        shutil.rmtree(path)
+        try:
+            shutil.rmtree(path)
+            logging.info(f"Folder was removed successfully: {path}")
+        except Exception as err:
+            logging.error(f"Error {err} when trying to delete folder: {path}")
 
-    os.makedirs(path, exist_ok=True)
+    try:
+        os.makedirs(path, exist_ok=True)
+        logging.info(f"Folder was created successfully: {path}")
+    except Exception as err:
+        logging.error(f"Couldn't create a folder: {path}")
+        raise SystemExit ("There was an issue creating a folder: {}".format(err))
 
 def create_random_folder(base_path):
     """

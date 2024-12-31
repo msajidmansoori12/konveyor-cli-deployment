@@ -1,3 +1,4 @@
+import logging
 import subprocess
 
 import config
@@ -15,18 +16,18 @@ def pull_tag_images(mta_version, output_file):
         keywords = ['java', 'generic', 'dotnet', 'cli']
         for image in related_images:
             if any(keyword in image for keyword in keywords):  # Check if the image contains any of the keywords.
-                print(f"Image : {image}")
+                logging.info(f"Image : {image}")
                 # Pull image from registry-proxy.engineer.redhat.com
                 proxy_image_url = 'registry-proxy.engineering.redhat.com/rh-osbs/mta-{}'.format(image.split('/')[-1])
                 pull_command = f'podman pull {proxy_image_url} --tls-verify=false'
-                print(f'Pulling image: {proxy_image_url}')
+                logging.info(f'Pulling image: {proxy_image_url}')
                 run_command(pull_command)
-                print('Pull successful')
+                logging.info('Pull successful')
                 tag_image = image.split('@sha')[-2]
-                print(f'Tagging image {proxy_image_url} to {tag_image}:{mta_version}')
+                logging.info(f'Tagging image {proxy_image_url} to {tag_image}:{mta_version}')
                 tag_command = f'podman tag {proxy_image_url} {tag_image}:{mta_version}'  #Tag image to correct version
                 run_command(tag_command)
-                print('Tagging complete...')
+                logging.info(f'Tagging {image} is completed...')
 
 def remove_old_images(version):
     """
@@ -48,10 +49,11 @@ def remove_old_images(version):
         # Deleting images gotten after filtering
         for image in images:
             run_command(f"podman rmi {image} --force", False)
+            logging.info(f"Image {image} was removed successfully")
     except subprocess.CalledProcessError as e:
-        print(f"Error while performing command: {e}")
+        logging.error(f"Error while performing command: {e}")
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        logging.error(f"Unexpected error: {e}")
 
 def generate_images_list(version, build):
     """
