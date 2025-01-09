@@ -7,6 +7,7 @@ import json
 import sys
 import paramiko
 import logging
+import requests
 
 # Logging configuration
 logging.basicConfig(
@@ -17,40 +18,6 @@ logging.basicConfig(
         logging.StreamHandler(sys.stdout)  # Redirecting to stdout
     ]
 )
-
-# def run_command(command, fail_on_failure=True, client=None):
-#     """
-#     Runs command either locally or on a remote machine via SSH
-#     :param command: Command that will be performed
-#     :param fail_on_failure: Flag if run should be terminated on failure or not
-#     :param client: Paramiko SSH client (optional)
-#     :return: output of command performed
-#     """
-#     try:
-#         if client:
-#             logging.info(f"Executing remote command: {command}")
-#             # Remote execution via SSH
-#             _stdin, stdout, _stderr = client.exec_command(command)
-#             stdout_result = stdout.read().decode('utf-8')
-#             stderr_result = _stderr.read().decode('utf-8')
-#
-#             if stderr_result and fail_on_failure:
-#                 raise Exception(stderr_result)
-#
-#             return stdout_result
-#         else:
-#             # Local execution
-#             logging.info(f"Executing command: {command}")
-#             result = subprocess.run(command, shell=True, check=fail_on_failure, stdout=subprocess.PIPE, encoding='utf-8')
-#             return result.stdout
-#     except subprocess.CalledProcessError as err:
-#         logging.error(f"Local command failed: {err}")
-#         if fail_on_failure:
-#             raise SystemExit("There was an issue running a command: {}".format(err))
-#     except Exception as err:
-#         logging.error(f"Remote command failed: {err}")
-#         if fail_on_failure:
-#             raise SystemExit("There was an issue running a command: {}".format(err))
 
 def run_command(command, fail_on_failure=True, client=None):
     """
@@ -188,3 +155,31 @@ def create_random_folder(base_path):
     os.makedirs(full_path)
 
     return full_path
+
+
+def get_latest_upstream_dependency(user, repo, asset_name):
+    url = f'https://api.github.com/repos/{user}/{repo}/releases'
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        releases = response.json()
+        for release in releases:
+            # Check if the release is a prerelease (beta/alpha)
+            if release['prerelease']:
+                for asset in release['assets']:
+                    if asset['name'] == asset_name:
+                        return asset['browser_download_url']
+    else:
+        logging.error(f"Error fetching releases: {response.status_code}")
+        return None
+
+
+def download_file(url, local_filename):
+    response = requests.get(url, stream=True)
+    if response.status_code == 200:
+        with open(local_filename, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        logging.info(f"File saved as {local_filename}")
+    else:
+        logging.error(f"Error downloading file: {response.status_code}")

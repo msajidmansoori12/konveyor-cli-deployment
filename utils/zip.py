@@ -21,7 +21,7 @@ def get_zip_folder_name(image_list):
                 _, major, minor = value["nvr"].rsplit("-", 2)
                 return f"MTA-{major}-{minor}"
 
-def get_zip_name(version):
+def get_zip_name(version="upstream"):
     """
     Gets ZIP filename according to OS and CPU type
     :param version: MTA version, for example 7.2.0 or 7.1.1
@@ -36,9 +36,16 @@ def get_zip_name(version):
         machine = "amd64"
     else:
         machine = "unknown"
-    zip_name = f"mta-{version}-cli-{os_name}-{machine}.zip"
-    logging.info(f"Expecting {zip_name} to be available...")
+
+    if version != "upstream":
+        zip_name = f"mta-{version}-cli-{os_name}-{machine}.zip"
+        logging.info(f"Expecting {zip_name} to be available...")
+    else:
+        zip_name = f"kantra.{os_name}.{machine}.zip"
+        logging.info(f"Expecting {zip_name} to be available...")
+
     return zip_name
+
 
 def unpack_zip(zip_file, target_path):
     """

@@ -31,7 +31,7 @@ def pull_tag_images(mta_version, output_file, client=None):
                 run_command(tag_command, True, client)
                 logging.info(f'Tagging {image} is completed...')
 
-def remove_old_images(version, client=None):
+def remove_old_images(version="upstream", client=None):
     """
     Removes old images before pulling new
     :param version: MTA version to be cleaned up
