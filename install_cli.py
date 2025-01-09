@@ -5,6 +5,7 @@ import json
 import config
 from config import set_config
 from local_deployment import run_local_deployment
+from remote_deployment import run_remote_deployment
 
 CONFIG_FILE = "config.json"
 
@@ -41,4 +42,11 @@ if __name__ == "__main__":
                           "args_dependency_file": args.dependency_file
                           })
     else:
-        print("Deployment on remote server is not supported yet")
+        run_remote_deployment({"version": args.mta_version,
+                               "build": args.build,
+                               "args_image_output_file": args.image_output_file,
+                               "args_dependency_file": args.dependency_file,
+                               "args_ip_address": args.ip_address
+                          })
+        # print("Deployment on remote server is not supported yet")
+

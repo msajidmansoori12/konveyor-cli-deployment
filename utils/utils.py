@@ -18,19 +18,78 @@ logging.basicConfig(
     ]
 )
 
-def run_command(command, fail_on_failure=True):
+# def run_command(command, fail_on_failure=True, client=None):
+#     """
+#     Runs command either locally or on a remote machine via SSH
+#     :param command: Command that will be performed
+#     :param fail_on_failure: Flag if run should be terminated on failure or not
+#     :param client: Paramiko SSH client (optional)
+#     :return: output of command performed
+#     """
+#     try:
+#         if client:
+#             logging.info(f"Executing remote command: {command}")
+#             # Remote execution via SSH
+#             _stdin, stdout, _stderr = client.exec_command(command)
+#             stdout_result = stdout.read().decode('utf-8')
+#             stderr_result = _stderr.read().decode('utf-8')
+#
+#             if stderr_result and fail_on_failure:
+#                 raise Exception(stderr_result)
+#
+#             return stdout_result
+#         else:
+#             # Local execution
+#             logging.info(f"Executing command: {command}")
+#             result = subprocess.run(command, shell=True, check=fail_on_failure, stdout=subprocess.PIPE, encoding='utf-8')
+#             return result.stdout
+#     except subprocess.CalledProcessError as err:
+#         logging.error(f"Local command failed: {err}")
+#         if fail_on_failure:
+#             raise SystemExit("There was an issue running a command: {}".format(err))
+#     except Exception as err:
+#         logging.error(f"Remote command failed: {err}")
+#         if fail_on_failure:
+#             raise SystemExit("There was an issue running a command: {}".format(err))
+
+def run_command(command, fail_on_failure=True, client=None):
     """
-    Runs command in terminal
+    Runs command either locally or on a remote machine via SSH
     :param command: Command that will be performed
-    :param fail_on_failure: flag if run should be terminated on failure or not
+    :param fail_on_failure: Flag if run should be terminated on failure or not
+    :param client: Paramiko SSH client (optional)
     :return: output of command performed
     """
     try:
         logging.info(f"Executing command: {command}")
-        return subprocess.run(command, shell=True, check=fail_on_failure, stdout=subprocess.PIPE, encoding='utf-8')
+        if client:
+            # Remote execution via SSH
+            _stdin, stdout, _stderr = client.exec_command(command)
+            stdout_result = stdout.read().decode('utf-8')
+            stderr_result = _stderr.read().decode('utf-8')
+
+            exit_status = stdout.channel.recv_exit_status()
+            if exit_status != 0 and fail_on_failure:
+                raise Exception(stderr_result)
+
+            # Return both stdout and stderr to handle non-critical messages
+            return stdout_result, stderr_result
+        else:
+            # Local execution
+            result = subprocess.run(command, shell=True, check=fail_on_failure, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
+            if result.returncode != 0 and fail_on_failure:
+                raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout, stderr=result.stderr)
+
+            # Return both stdout and stderr to handle non-critical messages
+            return result.stdout, result.stderr
+    except subprocess.CalledProcessError as err:
+        logging.error(f"Local command failed: {err}")
+        if fail_on_failure:
+            raise SystemExit("There was an issue running a command: {}".format(err))
     except Exception as err:
-        logging.error(f"Command failed: {err}")
-        raise SystemExit("There was an issue running a command: {}".format(err))
+        logging.error(f"Remote command failed: {err}")
+        if fail_on_failure:
+            raise SystemExit("There was an issue running a command: {}".format(err))
 
 def read_file(output_file):
     """
@@ -58,22 +117,31 @@ def convert_to_json(file):
     except Exception as err:
         raise SystemExit(f"There was an error converting string to JSON format: {err}")
 
-def connect_ssh(ip_address, command):
+def connect_ssh(ip_address):
     SSH_HOST = ip_address
     SSH_USER = 'igor'
     SSH_KEY = None
+    client = paramiko.SSHClient()
     try:
-        with paramiko.SSHClient() as client:
-            client.load_system_host_keys()
-            client.connect(SSH_HOST, username=SSH_USER, key_filename=SSH_KEY)
-            _stdin, stdout, _stderr = client.exec_command(command)
-            for line in iter(lambda: stdout.readline(2048).rstrip(), ""):
-                print(line)
-            stderr = _stderr.read()
-            if len(stderr) > 0:
-                raise SystemExit(stderr)
+        client.load_system_host_keys()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(SSH_HOST, username=SSH_USER, key_filename=SSH_KEY)
+        return client
+    except Exception as err:
+        client.close()
+        raise SystemExit("There was an issue connecting to host by ssh: {}".format(err))
+
+def run_command_ssh(client, command):
+    try:
+        _stdin, stdout, _stderr = client.exec_command(command)
+        for line in iter(lambda: stdout.readline(2048).rstrip(), ""):
+            print(line)
+        stderr = _stderr.read()
+        if len(stderr) > 0:
+            raise SystemExit(stderr)
     except Exception as err:
         raise SystemExit("There was an issue with ssh command: {}".format(err))
+
 
 def get_target_dependency_path():
     """
