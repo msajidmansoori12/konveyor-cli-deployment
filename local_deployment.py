@@ -21,7 +21,7 @@ def run_local_deployment(data):
         remove_old_images(version)
         if not image_output_file:
             logging.info(f"Generating images list for {version}-{build}")
-            image_list = generate_images_list(version, build)
+            image_list, stdout_err = generate_images_list(version, build)
         else:
             logging.info(f"Using images list provided as CLI argument: {image_output_file}")
             image_list = read_file(image_output_file)
