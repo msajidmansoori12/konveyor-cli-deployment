@@ -2,17 +2,18 @@
 
 ## Overview
 
-The Konveyor CLI Deployment tool simplifies the deployment and preparation of the Konveyor CLI. It supports end-to-end deployment for both containerized images and containerless CLI environments.
+The Konveyor CLI Deployment tool simplifies deployment and preparation for the Konveyor CLI. It supports end-to-end deployment, both for containerized images and containerless CLI environments.
 
 ## Usage
 
-To view available options, run the following command:
+To view all available options, run the following command:
 
 ```bash
 ./install_cli.py --help
 ```
 
 ### Command Output:
+
 ```text
 ./install_cli.py --help
 usage: install_cli.py [-h] --mta_version MTA_VERSION --build BUILD [--image_output_file IMAGE_OUTPUT_FILE] [--dependency_file DEPENDENCY_FILE]
@@ -33,13 +34,13 @@ options:
 
 ### Example
 
-Basic command to deploy the D/S CLI:
+Basic command to deploy the Downstream (*D/S*) CLI:
 
 ```bash
 ./install_cli.py --mta_version 7.2.0 --build 46
 ```
 
-Basic command to deploy the U/S CLI:
+Basic command to deploy the Upstream (*U/S*) CLI:
 
 ```bash
 ./install_cli.py --upstream true
@@ -49,7 +50,8 @@ Basic command to deploy the U/S CLI:
 
 You need to create a `config.json` file before running the tool. A template file, `config.json.example`, is included for reference.
 
-### `config.json` Example
+### Example `config.json`
+
 ```json
 {
   "misc_downstream_path": "YOUR_PATH/misc-downstream/",
@@ -65,40 +67,39 @@ You need to create a `config.json` file before running the tool. A template file
 ### Configuration Parameters
 
 1. **`misc_downstream_path`**
-   - Path to the cloned `misc_downstream` tool, used to generate dependencies and images list.
-   - This parameter can be omitted if you plan to use a pre-generated images list file and dependencies archive.
-   - This parameter can be omitted if you are going to install U/S
+  * Path to the cloned `misc_downstream` tool, used to generate dependencies and image lists.
+  * This parameter can be omitted if you plan to use a pre-generated image list file and dependencies archive.
+  * This parameter can be omitted if you install the *U/S* CLI.
 
 2. **`extract_binary`**
-   - name of the script used to extract the binary.
-   - This parameter can be omitted if you plan to use a pre-generated dependencies archive.
-   - This parameter can be omitted if you are going to install U/S
+  * Name of the script used to extract the binary.
+  * This parameter can be omitted if you plan to use a pre-generated dependencies archive.
+  * This parameter can be omitted if you install the *U/S* CLI.
 
 3. **`get_images_output`**
-   - Script to generate the `related_images` file for the bundle.
-   - This parameter can be omitted if you plan to use a pre-generated images list file.
-   - This parameter can be omitted if you are going to install U/S
+  * Script to generate the `related_images` file for the bundle.
+  * This parameter can be omitted if you plan to use a pre-generated image list file.
+  * This parameter can be omitted if you install the *U/S* CLI.
 
 4. **`bundle`**
-   - Specifies the bundle flag for the MTA operator bundle container.
-   - This parameter can be omitted if you plan to use a pre-generated images list file and dependencies archive.
-   - This parameter can be omitted if you are going to install U/S
+  * Specifies the bundle flag for the MTA operator bundle container.
+  * This parameter can be omitted if you plan to use a pre-generated image list file and dependencies archive.
+  * This parameter can be omitted if you install the *U/S* CLI.
 
 5. **`no_brew`**
-   - Optional flag to skip the use of Brew.
-   - This parameter can be omitted if you plan to use a pre-generated images list file and dependencies archive.
-   - This parameter can be omitted if you are going to install U/S
+  * Optional flag to skip the use of Brew.
+  * This parameter can be omitted if you plan to use a pre-generated image list file and dependencies archive.
+  * This parameter can be omitted if you install the *U/S* CLI.
 
 6. **`ssh_user`**
-   - Username for SSH access to a remote host. Can be omitted in case of local deployment.
+  * Username for SSH access to a remote host. It can be omitted for local deployments.
 
 7. **`ssh_key`**
-   - SSH key for authentication to the remote host. Can be omitted in case of local deployment.
+  * SSH key for authentication to the remote host. It can be omitted for local deployments.
 
 ## Additional Information
 
-- Ensure all required scripts and dependencies are accessible in the paths specified in `config.json`.
-- Refer to the `config.json.example` file for further customization.
+* Ensure all required scripts and dependencies are accessible in the paths specified in `config.json`.
+* Refer to the [example config.json](#example-configjson) file for further customizations.
 
-For detailed documentation, visit the [Konveyor project page](https://konveyor.io).
-
+For detailed documentation, see the [Konveyor project page](https://konveyor.io).
