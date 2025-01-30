@@ -19,6 +19,7 @@ logging.basicConfig(
     ]
 )
 
+
 def run_command(command, fail_on_failure=True, client=None):
     """
     Runs command either locally or on a remote machine via SSH
@@ -37,26 +38,34 @@ def run_command(command, fail_on_failure=True, client=None):
 
             exit_status = stdout.channel.recv_exit_status()
             if exit_status != 0 and fail_on_failure:
+                print(f"[ERROR] Remote command failed:\n{stderr_result}")
                 raise Exception(stderr_result)
 
-            # Return both stdout and stderr to handle non-critical messages
             return stdout_result, stderr_result
         else:
             # Local execution
-            result = subprocess.run(command, shell=True, check=fail_on_failure, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8')
-            if result.returncode != 0 and fail_on_failure:
-                raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout, stderr=result.stderr)
+            result = subprocess.run(
+                command, shell=True, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8'
+            )
 
-            # Return both stdout and stderr to handle non-critical messages
+            if result.returncode != 0:
+                logging.error(f"Local command failed: {result.stderr}")
+                print(f"[ERROR] Local command failed:\n{result.stderr}")
+                if fail_on_failure:
+                    raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout,
+                                                        stderr=result.stderr)
+
             return result.stdout, result.stderr
     except subprocess.CalledProcessError as err:
-        logging.error(f"Local command failed: {err}")
+        logging.error(f"Local command failed: {err.stderr}")
+        print(f"[ERROR] Local command failed:\n{err.stderr}")
         if fail_on_failure:
-            raise SystemExit("There was an issue running a command: {}".format(err))
+            raise SystemExit(f"There was an issue running a command: {err}")
     except Exception as err:
         logging.error(f"Remote command failed: {err}")
+        print(f"[ERROR] Remote command failed:\n{err}")
         if fail_on_failure:
-            raise SystemExit("There was an issue running a command: {}".format(err))
+            raise SystemExit(f"There was an issue running a command: {err}")
 
 def read_file(output_file):
     """
