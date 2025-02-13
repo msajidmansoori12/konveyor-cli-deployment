@@ -8,6 +8,9 @@ import sys
 import paramiko
 import logging
 import requests
+import platform
+
+from utils.const import zip_urls
 
 # Logging configuration
 logging.basicConfig(
@@ -164,7 +167,7 @@ def get_latest_upstream_dependency(user, repo, asset_name):
     if response.status_code == 200:
         releases = response.json()
         for release in releases:
-            # Check if the release is a prerelease (beta/alpha)
+            # Check if the release is a pre-release (beta/alpha)
             if release['prerelease']:
                 for asset in release['assets']:
                     if asset['name'] == asset_name:
@@ -172,6 +175,14 @@ def get_latest_upstream_dependency(user, repo, asset_name):
     else:
         logging.error(f"Error fetching releases: {response.status_code}")
         return None
+
+
+def pull_stage_ga_dependency_file(mta_version, repo):
+    os_name, machine = get_os_platform()
+    dependency_file_name = f'mta-{mta_version}-cli-{os_name}-{machine}.zip'
+    dependency_file_url=zip_urls.get(repo).format(ver=mta_version) + dependency_file_name
+    download_file(dependency_file_url, dependency_file_name)
+    return dependency_file_name
 
 
 def download_file(url, local_filename):
@@ -183,3 +194,16 @@ def download_file(url, local_filename):
         logging.info(f"File saved as {local_filename}")
     else:
         logging.error(f"Error downloading file: {response.status_code}")
+
+
+def get_os_platform ():
+    os_name = platform.system().lower()
+    machine = platform.machine().lower()
+
+    if "aarch64" in machine or "arm64" in machine:
+        machine = "arm64"
+    elif "x86_64" in machine or "amd64" in machine:
+        machine = "amd64"
+    else:
+        machine = "unknown"
+    return os_name, machine

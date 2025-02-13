@@ -3,7 +3,7 @@ import platform
 import zipfile
 
 import config
-from utils.utils import convert_to_json, clear_folder, run_command
+from utils.utils import convert_to_json, clear_folder, run_command, get_os_platform
 
 
 def get_zip_folder_name(image_list):
@@ -27,15 +27,7 @@ def get_zip_name(version="upstream"):
     :param version: MTA version, for example 7.2.0 or 7.1.1
     :return: String containing file name
     """
-    os_name = platform.system().lower()
-    machine = platform.machine().lower()
-
-    if "aarch64" in machine or "arm64" in machine:
-        machine = "arm64"
-    elif "x86_64" in machine or "amd64" in machine:
-        machine = "amd64"
-    else:
-        machine = "unknown"
+    os_name, machine = get_os_platform()
 
     if version != "upstream":
         zip_name = f"mta-{version}-cli-{os_name}-{machine}.zip"
