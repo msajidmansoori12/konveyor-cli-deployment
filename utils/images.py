@@ -2,6 +2,7 @@ import logging
 import subprocess
 
 import config
+from utils.const import related_images, repositories, basic_images
 from utils.utils import run_command, convert_to_json
 
 
@@ -19,7 +20,6 @@ def pull_tag_images(mta_version, output_file, client=None):
             if any(keyword in image for keyword in keywords):  # Check if the image contains any of the keywords.
                 logging.info(f"Image : {image}")
                 # Pull image from registry-proxy.engineer.redhat.com
-                # proxy_image_url = 'registry-proxy.engineering.redhat.com/rh-osbs/mta-{}'.format(image.split('/')[-1])
                 proxy_image_url = 'brew.registry.redhat.io/rh-osbs/mta-{}'.format(image.split('/')[-1])
                 pull_command = f'podman pull {proxy_image_url} --tls-verify=false'
                 logging.info(f'Pulling image: {proxy_image_url}')
@@ -30,6 +30,32 @@ def pull_tag_images(mta_version, output_file, client=None):
                 tag_command = f'podman tag {proxy_image_url} {tag_image}:{mta_version}'  #Tag image to correct version
                 run_command(tag_command, True, client)
                 logging.info(f'Tagging {image} is completed...')
+
+
+def pull_stage_ga_images(mta_version, repo):
+    required_version_tuple = (7, 1, 0)
+    current_version_tuple = tuple(map(int, mta_version.split('.')))
+
+    if current_version_tuple >= required_version_tuple and repo in ["stage"]:
+        logging.info('Version >= 7.1.0 , will pull related images')
+        images = basic_images + related_images
+    else:
+        logging.info('Pulling only main image')
+        images = basic_images
+
+    for image in images:
+        image_url = repositories.get(repo) + f'/mta/{image}:{mta_version}'
+        logging.info(f"Processing repository: {repo} (url: {image_url})")
+        # Pull the image
+        pull_command = f"podman pull {image_url} --tls-verify=false"
+        run_command(pull_command)
+        logging.info(f"Pulled image from {repo}")
+        # Tag the image based on the repository type
+        tag_command = f"podman tag {image_url} {repositories.get('ga') + f'/mta/{image}:{mta_version}'}"
+        if repo != 'ga':
+            run_command(tag_command)
+            logging.info(f"Tagged image {image} to ga")
+
 
 def remove_old_images(version="upstream", client=None):
     """
