@@ -33,10 +33,16 @@ def pull_tag_images(mta_version, output_file, client=None):
 
 
 def pull_stage_ga_images(mta_version, repo):
+    """
+    Pulls images for Stage / GA
+    :param mta_version: MTA version to be pulled
+    :param repo: either ga or stage to be pulled
+    :return:
+    """
     required_version_tuple = (7, 1, 0)
     current_version_tuple = tuple(map(int, mta_version.split('.')))
 
-    if current_version_tuple >= required_version_tuple and repo in ["stage"]:
+    if current_version_tuple >= required_version_tuple:
         logging.info('Version >= 7.1.0 , will pull related images')
         images = basic_images + related_images
     else:
