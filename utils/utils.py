@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 import shutil
@@ -6,11 +7,12 @@ import subprocess
 import json
 import sys
 import paramiko
-import logging
 import requests
 import platform
 
 from utils.const import zip_urls
+
+# from utils.const import zip_urls
 
 # Logging configuration
 logging.basicConfig(
@@ -47,16 +49,17 @@ def run_command(command, fail_on_failure=True, client=None):
             return stdout_result, stderr_result
         else:
             # Local execution
-            result = subprocess.run(
-                command, shell=True, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8'
-            )
-
-            if result.returncode != 0:
-                logging.error(f"Local command failed: {result.stderr}")
-                print(f"[ERROR] Local command failed:\n{result.stderr}")
-                if fail_on_failure:
-                    raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout,
-                                                        stderr=result.stderr)
+            result = subprocess.run(command,
+                                    shell=True,
+                                    check=fail_on_failure,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    encoding='utf-8')
+            if result.returncode != 0 and fail_on_failure:
+                raise subprocess.CalledProcessError(result.returncode,
+                                                    command,
+                                                    output=result.stdout,
+                                                    stderr=result.stderr)
 
             return result.stdout, result.stderr
     except subprocess.CalledProcessError as err:
@@ -170,6 +173,13 @@ def create_random_folder(base_path):
 
 
 def get_latest_upstream_dependency(user, repo, asset_name):
+    """
+    Downloads latest U/S dependency file from github
+    :param user: Owner's use
+    :param repo: Repo where file is located
+    :param asset_name:
+    :return:
+    """
     url = f'https://api.github.com/repos/{user}/{repo}/releases'
     response = requests.get(url)
 
