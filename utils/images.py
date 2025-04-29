@@ -26,6 +26,8 @@ def pull_tag_images(mta_version, output_file, client=None):
                 run_command(pull_command, True, client)
                 logging.info('Pull successful')
                 tag_image = image.split('@sha')[-2]
+                if 'dotnet' in tag_image:
+                    tag_image = tag_image.replace("rhel9", "rhel8")
                 logging.info(f'Tagging image {proxy_image_url} to {tag_image}:{mta_version}')
                 tag_command = f'podman tag {proxy_image_url} {tag_image}:{mta_version}'  #Tag image to correct version
                 run_command(tag_command, True, client)
