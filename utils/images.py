@@ -14,6 +14,8 @@ def pull_tag_images(mta_version, output_file, client=None):
     :param client: SSH client, optional parameter. Will be used to connect to remote host and pull images there if present.
     """
     related_images = convert_to_json(output_file).get('related_images_pullspecs', None)
+    required_version_tuple = (7, 3, 0)
+    current_version_tuple = tuple(map(int, mta_version.split('.')))
     if related_images:  # If related images are present then proceed
         keywords = ['java', 'generic', 'dotnet', 'cli']
         for image in related_images:
@@ -26,7 +28,7 @@ def pull_tag_images(mta_version, output_file, client=None):
                 run_command(pull_command, True, client)
                 logging.info('Pull successful')
                 tag_image = image.split('@sha')[-2]
-                if 'dotnet' in tag_image:
+                if 'dotnet' in tag_image and current_version_tuple < required_version_tuple:
                     tag_image = tag_image.replace("rhel9", "rhel8")
                 logging.info(f'Tagging image {proxy_image_url} to {tag_image}:{mta_version}')
                 tag_command = f'podman tag {proxy_image_url} {tag_image}:{mta_version}'  #Tag image to correct version
