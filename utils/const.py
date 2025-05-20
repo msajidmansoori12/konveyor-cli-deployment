@@ -16,7 +16,7 @@ repositories = {
 }
 
 related_images = ["mta-java-external-provider-rhel9", "mta-generic-external-provider-rhel9",
-                  "mta-dotnet-external-provider-rhel8"]
+                  "mta-dotnet-external-provider-rhel9"]
 basic_images = ['mta-cli-rhel9']
 
 # Define the URLs for the zip files based on repository types
