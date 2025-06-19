@@ -43,17 +43,13 @@ def pull_stage_ga_images(mta_version, repo):
     :param repo: either ga or stage to be pulled
     :return:
     """
-    required_version_tuple = (7, 1, 0)
+    required_version_tuple = (7, 3, 0)
     current_version_tuple = tuple(map(int, mta_version.split('.')))
-
-    if current_version_tuple >= required_version_tuple:
-        logging.info('Version >= 7.1.0 , will pull related images')
-        images = basic_images + related_images
-    else:
-        logging.info('Pulling only main image')
-        images = basic_images
+    images = basic_images + related_images
 
     for image in images:
+        if 'dotnet' in image and current_version_tuple < required_version_tuple:
+            image = image.replace("rhel9", "rhel8")
         image_url = repositories.get(repo) + f'/mta/{image}:{mta_version}'
         logging.info(f"Processing repository: {repo} (url: {image_url})")
         # Pull the image
