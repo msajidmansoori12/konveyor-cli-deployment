@@ -20,7 +20,7 @@ def run_local_deployment(data):
     if version and build and not upstream:
         remove_old_images(version)
         logging.info(f"Deploying MTA Version: {version} {build}")
-        if build == "stage" or build == "ga":
+        if build == "stage" or build == "candidate" or build == "ga":
             pull_stage_ga_images(version, build)
             full_zip_name = pull_stage_ga_dependency_file(version, build)
         else:

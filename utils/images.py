@@ -58,7 +58,7 @@ def pull_stage_ga_images(mta_version, repo):
         logging.info(f"Pulled image from {repo}")
         # Tag the image based on the repository type
         tag_command = f"podman tag {image_url} {repositories.get('ga') + f'/mta/{image}:{mta_version}'}"
-        if repo != 'ga':
+        if repo != 'ga' and repo != 'candidate':
             run_command(tag_command)
             logging.info(f"Tagged image {image} to ga")
 

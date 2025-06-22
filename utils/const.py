@@ -11,6 +11,7 @@ Attributes:
 
 repositories = {
     "ga": "registry.redhat.io",
+    "candidate": "registry.redhat.io",
     "stage": "registry.stage.redhat.io"
     # Add more repositories as needed
 }
@@ -22,6 +23,6 @@ basic_images = ['mta-cli-rhel9']
 # Define the URLs for the zip files based on repository types
 zip_urls = {
     "stage": "http://download.devel.redhat.com/rcm-guest/staging/jboss-migrationtoolkit/MTA-{ver}.GA/",
-    "candidate": "http://download.eng.brq.redhat.com/devel/candidates/middleware/migrationtoolkit/MTA-{ver}/",
+    "candidate": "http://download.eng.brq.redhat.com/devel/candidates/middleware/migrationtoolkit/MTA-{ver}.GA/",
     "ga": "https://download.devel.redhat.com/released/middleware/mta/{ver}/"
 }
